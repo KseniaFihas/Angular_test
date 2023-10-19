@@ -1,4 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core'; 
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { PasswordService } from '../password.service';
+import Swal from 'sweetalert2';
+import { ColorPickerComponent } from '../color-picker/color-picker.component'; 
 
 @Component({
   selector: 'app-password-checker',
@@ -6,23 +10,40 @@ import { Component } from '@angular/core';
   styleUrls: ['./password-checker.component.css']
 })
 export class PasswordCheckerComponent {
-  password = '';
+  @ViewChild(ColorPickerComponent) colorPickerComponent!: ColorPickerComponent; 
+
+  form!: FormGroup; 
   passwordStrength = '';
 
+  constructor(
+    private passwordService: PasswordService,
+    private formBuilder: FormBuilder
+  ) {
+    this.form = this.formBuilder.group({
+      password: [''],
+      color: ['grey'],
+    });
+  }
+
+  ngOnInit() {
+    
+  }
+
   checkPassword() {
-    if (this.password.length === 0) {
-      this.passwordStrength = 'empty';
-    } else if (this.password.length < 8) {
-      this.passwordStrength = 'weak';
-    } else if (/[a-zA-Z]/.test(this.password) && /[0-9]/.test(this.password) && /[!@#$%^&*]/.test(this.password)) {
-      this.passwordStrength = 'strong';
-    } else {
-      this.passwordStrength = 'medium';
+    const passwordControl = this.form.get('password');
+    if (passwordControl) {
+      const password = passwordControl.value;
+      this.passwordStrength = this.passwordService.checkPasswordStrength(password);
+      this.colorPickerComponent.updateColor(this.passwordStrength); 
     }
   }
 
   submitForm() {
-    localStorage.setItem('password', this.password);
-  alert('Password saved successfully');
+  const passwordControl = this.form.get('password');
+  if (passwordControl) {
+    const password = passwordControl.value;
+    localStorage.setItem('password', password);
+    Swal.fire('Успішно!', 'Пароль збережено в локальному сховищі.', 'success');
   }
+}
 }
